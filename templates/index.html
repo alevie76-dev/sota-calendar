@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOTA Calendar Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .spinner {
+      border: 2px solid #e5e7eb;
+      border-top-color: #d97706;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .assoc-list { max-height: 320px; overflow-y: auto; }
+    .region-list { max-height: 220px; overflow-y: auto; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #fef3c7; color: #92400e;
+      border: 1px solid #fcd34d; border-radius: 9999px;
+      padding: 2px 10px; font-size: 0.8rem; font-weight: 600;
+      cursor: default;
+    }
+    .tag-watch {
+      background: #ede9fe; color: #5b21b6;
+      border-color: #c4b5fd;
+    }
+    .tag-btn { background: none; border: none; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0; color: inherit; opacity: 0.6; }
+    .tag-btn:hover { opacity: 1; }
+    input[type=range] { accent-color: #d97706; }
+    .preview-row-watch { background: #f5f3ff; }
+    .scroll-panel { scrollbar-width: thin; scrollbar-color: #d1d5db transparent; }
+    .continent-btn { font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid #d1d5db; cursor: pointer; transition: all .15s; }
+    .continent-btn.active { background: #d97706; color: white; border-color: #d97706; }
+    .export-card { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; }
+    code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; }
+    .copy-btn { font-size: 0.75rem; padding: 2px 8px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; background: white; }
+    .copy-btn:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen" id="app">
+
+<!-- ─── Header ─────────────────────────────────────────────────────────────── -->
+<header class="bg-amber-700 text-white shadow-lg sticky top-0 z-50">
+  <div class="max-w-screen-xl mx-auto px-4 py-3 flex items-center gap-3">
+    <svg class="w-7 h-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M3 20 L9 8 L12 13 L15 6 L21 20Z" stroke-linejoin="round"/>
+      <circle cx="17" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+      <path d="M17 4.5 Q20 3 21 5" stroke-width="1.2"/>
+    </svg>
+    <div>
+      <h1 class="text-lg font-bold leading-none">SOTA Calendar Builder</h1>
+      <p class="text-amber-200 text-xs mt-0.5">Generate customizable ICS calendars from SOTA Alerts</p>
+    </div>
+    <div class="ml-auto text-xs text-amber-200" id="api-status">Loading associations…</div>
+  </div>
+</header>
+
+<div class="max-w-screen-xl mx-auto px-4 py-5 flex gap-5">
+
+  <!-- ─── Left Panel: Filters ─────────────────────────────────────────────── -->
+  <aside class="w-80 shrink-0 flex flex-col gap-4">
+
+    <!-- Calendar Name -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Calendar Name</label>
+      <input id="cal-name" type="text" value="SOTA Activation Alerts"
+        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+    </div>
+
+    <!-- Associations -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Associations</h2>
+
+      <!-- Search + Continent filter -->
+      <input id="assoc-search" type="text" placeholder="Search associations…"
+        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+        oninput="renderAssocList()" />
+
+      <div class="flex flex-wrap gap-1 mb-2" id="continent-filters">
+        <!-- rendered by JS -->
+      </div>
+
+      <!-- Association list -->
+      <div class="assoc-list scroll-panel" id="assoc-list">
+        <div class="text-gray-400 text-sm py-4 text-center">
+          <span class="spinner"></span>
+        </div>
+      </div>
+
+      <div class="mt-2 text-xs text-gray-400" id="assoc-selected-summary">No associations selected</div>
+    </div>
+
+    <!-- Watched Activators -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Watched Activators</h2>
+      <p class="text-xs text-gray-500 mb-2">
+        Add callsigns to track across <em>any</em> association. These generate
+        <span class="text-purple-700 font-semibold">[WATCH]</span> events.
+      </p>
+      <div class="flex gap-2 mb-2">
+        <input id="callsign-input" type="text" placeholder="e.g. KK7SDH"
+          class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-amber-400"
+          onkeydown="if(event.key==='Enter') addCallsign()" />
+        <button onclick="addCallsign()"
+          class="bg-amber-600 hover:bg-amber-700 text-white text-sm px-3 py-1.5 rounded font-semibold transition-colors">
+          Add
+        </button>
+      </div>
+      <div id="callsign-tags" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
+    </div>
+
+    <!-- Time Window -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Alert Window</h2>
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs text-gray-500">1 week</span>
+        <span id="days-label" class="text-sm font-bold text-amber-700">90 days</span>
+        <span class="text-xs text-gray-500">12 months</span>
+      </div>
+      <input id="days-slider" type="range" min="7" max="365" value="90" step="1"
+        class="w-full" oninput="updateDaysLabel(this.value)" />
+      <div class="mt-1 text-xs text-gray-400 text-center" id="days-hint">
+        Alerts from now through <span id="days-date"></span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col gap-2">
+      <button id="preview-btn" onclick="previewAlerts()"
+        class="w-full bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        Preview Alerts
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ─── Right Panel: Preview + Export ──────────────────────────────────── -->
+  <main class="flex-1 flex flex-col gap-4 min-w-0">
+
+    <!-- Welcome / empty state -->
+    <div id="welcome-panel" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <svg class="w-14 h-14 mx-auto text-amber-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <h2 class="text-lg font-semibold text-gray-700 mb-1">Build Your SOTA Calendar</h2>
+      <p class="text-gray-500 text-sm max-w-md mx-auto">
+        Select one or more associations on the left (optionally narrow to specific regions),
+        add activators to your watchlist, set your time window, then click
+        <strong>Preview Alerts</strong> to see what you'll get.
+      </p>
+      <div class="mt-5 grid grid-cols-3 gap-3 max-w-sm mx-auto text-xs text-gray-500">
+        <div class="bg-gray-50 rounded p-2">
+          <div class="text-lg mb-1">🏔</div>Select associations & regions
+        </div>
+        <div class="bg-gray-50 rounded p-2">
+          <div class="text-lg mb-1">📻</div>Watch specific activators
+        </div>
+        <div class="bg-gray-50 rounded p-2">
+          <div class="text-lg mb-1">📅</div>Export to ICS / Google Cal
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loading-panel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <div class="spinner mx-auto mb-3" style="width:32px;height:32px;border-width:3px;"></div>
+      <p class="text-gray-500 text-sm">Fetching alerts from SOTA API…</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="error-panel" class="hidden bg-red-50 rounded-lg shadow-sm border border-red-200 p-6">
+      <p class="text-red-700 font-semibold mb-1">Error</p>
+      <p id="error-message" class="text-red-600 text-sm"></p>
+    </div>
+
+    <!-- Results header -->
+    <div id="results-header" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3 flex items-center justify-between">
+      <div>
+        <span id="results-count" class="font-semibold text-gray-900"></span>
+        <span class="text-gray-500 text-sm ml-1" id="results-subtitle"></span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-gray-500">
+        <span>Sort:</span>
+        <select id="sort-select" onchange="sortAndRender()" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400">
+          <option value="date">Date</option>
+          <option value="summit">Summit</option>
+          <option value="callsign">Callsign</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Preview table -->
+    <div id="preview-panel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Date / Time (UTC)</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Summit</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Activator</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Frequency</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="preview-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- No results -->
+    <div id="no-results-panel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <p class="text-gray-500">No alerts match your current filters.</p>
+      <p class="text-gray-400 text-sm mt-1">Try expanding your time window or adding more associations.</p>
+    </div>
+
+    <!-- Export panel -->
+    <div id="export-panel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Export Calendar
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        <!-- Download ICS -->
+        <div class="export-card">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">📥</span>
+            <h3 class="font-semibold text-gray-800 text-sm">Download ICS</h3>
+          </div>
+          <p class="text-xs text-gray-500 mb-3">One-time snapshot. Import into any calendar app.</p>
+          <button onclick="downloadICS()"
+            class="w-full bg-amber-600 hover:bg-amber-700 text-white text-sm py-2 rounded font-semibold transition-colors">
+            Download .ics
+          </button>
+        </div>
+
+        <!-- Google Calendar -->
+        <div class="export-card">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">📅</span>
+            <h3 class="font-semibold text-gray-800 text-sm">Google Calendar</h3>
+          </div>
+          <p class="text-xs text-gray-500 mb-2">Import the downloaded .ics file, or subscribe if this server is publicly accessible.</p>
+          <button onclick="openGoogleImportHelp()"
+            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm py-2 rounded font-semibold transition-colors mb-1.5">
+            How to Import
+          </button>
+          <button onclick="copySubscribeURL()"
+            class="w-full border border-amber-300 hover:bg-amber-50 text-amber-800 text-sm py-2 rounded font-semibold transition-colors">
+            Copy Subscribe URL
+          </button>
+        </div>
+
+        <!-- Outlook / Other -->
+        <div class="export-card">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">📨</span>
+            <h3 class="font-semibold text-gray-800 text-sm">Outlook / Other</h3>
+          </div>
+          <p class="text-xs text-gray-500 mb-2">Works with Outlook, Apple Calendar, Thunderbird, and any ICS-compatible app.</p>
+          <button onclick="showImportInstructions()"
+            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm py-2 rounded font-semibold transition-colors">
+            Import Instructions
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Subscribe URL display -->
+      <div id="subscribe-url-box" class="hidden mt-3 bg-gray-50 border border-gray-200 rounded p-3">
+        <p class="text-xs font-semibold text-gray-600 mb-1">Subscribe URL (live auto-updating):</p>
+        <div class="flex items-center gap-2">
+          <code id="subscribe-url-text" class="flex-1 text-xs break-all bg-white border border-gray-200 rounded px-2 py-1.5 block"></code>
+          <button onclick="doCopyURL()" class="copy-btn shrink-0">Copy</button>
+        </div>
+        <p class="text-xs text-gray-400 mt-1.5">
+          Requires this server to be publicly accessible. In Google Calendar: Other calendars → + → From URL.
+          In Outlook.com: Add calendar → Subscribe from web.
+        </p>
+      </div>
+
+      <!-- Import instructions modal-like box -->
+      <div id="import-instructions-box" class="hidden mt-3 bg-gray-50 border border-gray-200 rounded p-4 text-sm">
+        <h4 class="font-semibold text-gray-800 mb-2">Import .ics into your calendar app</h4>
+        <div class="grid grid-cols-2 gap-4 text-xs text-gray-700">
+          <div>
+            <p class="font-semibold text-gray-600 mb-1">Google Calendar</p>
+            <ol class="list-decimal ml-4 space-y-0.5">
+              <li>Download the .ics file</li>
+              <li>Open Google Calendar</li>
+              <li>Settings → Import &amp; Export</li>
+              <li>Import → select the .ics file</li>
+              <li>Choose which calendar to add events to</li>
+            </ol>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-600 mb-1">Outlook (Desktop)</p>
+            <ol class="list-decimal ml-4 space-y-0.5">
+              <li>Download the .ics file</li>
+              <li>Double-click the file, or</li>
+              <li>File → Open &amp; Export → Import/Export</li>
+              <li>Import an iCalendar (.ics) file</li>
+              <li>Choose Open as new or Import</li>
+            </ol>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-600 mb-1">Apple Calendar</p>
+            <ol class="list-decimal ml-4 space-y-0.5">
+              <li>Download the .ics file</li>
+              <li>Double-click the .ics file</li>
+              <li>Choose which calendar to add to</li>
+              <li>Click Import</li>
+            </ol>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-600 mb-1">Outlook.com</p>
+            <ol class="list-decimal ml-4 space-y-0.5">
+              <li>Download the .ics file</li>
+              <li>Open Outlook.com Calendar</li>
+              <li>Add calendar → Upload from file</li>
+              <li>Select the .ics file</li>
+              <li>Click Import</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── Footer ───────────────────────────────────────────────────────────── -->
+<footer class="border-t border-gray-200 mt-6 py-4">
+  <div class="max-w-screen-xl mx-auto px-4 text-center text-xs text-gray-400">
+    Built by <a href="https://ops-relay.co" target="_blank" rel="noopener noreferrer"
+      class="text-amber-600 hover:text-amber-700 font-medium transition-colors">OpsRelay</a>
+    &nbsp;·&nbsp;
+    <a href="https://square.link/u/sAlaXXg3" target="_blank" rel="noopener noreferrer"
+      class="text-amber-600 hover:text-amber-700 font-medium transition-colors">☕ Buy me a coffee</a>
+    &nbsp;·&nbsp; Data from <a href="https://www.sota.org.uk" target="_blank" rel="noopener noreferrer"
+      class="hover:text-gray-600 transition-colors">SOTA</a>
+    &nbsp;·&nbsp; Not affiliated with the SOTA Management Team
+  </div>
+</footer>
+
+<!-- ─── Region Modal ─────────────────────────────────────────────────────── -->
+<div id="region-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+  <div class="bg-white rounded-xl shadow-2xl w-96 max-h-[80vh] flex flex-col">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+      <h3 id="region-modal-title" class="font-semibold text-gray-800">Select Regions</h3>
+      <button onclick="closeRegionModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    </div>
+    <div class="px-5 py-3 border-b border-gray-100 bg-gray-50 text-xs text-gray-500">
+      Leave all unchecked to include <strong>all regions</strong> in this association.
+    </div>
+    <div id="region-modal-list" class="overflow-y-auto flex-1 p-4 region-list scroll-panel"></div>
+    <div class="px-5 py-3 border-t border-gray-200 flex justify-between items-center">
+      <button onclick="clearRegions()" class="text-xs text-gray-500 hover:text-red-600 transition-colors">Clear all</button>
+      <div class="flex gap-2">
+        <button onclick="selectAllRegions()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded font-medium">Select all</button>
+        <button onclick="closeRegionModal()"
+          class="text-sm bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded font-semibold transition-colors">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+const state = {
+  allAssocs: [],             // all associations from API
+  continentFilter: 'ALL',
+  selectedAssocs: new Set(), // Set of assoc codes
+  regionData: {},            // assocCode → [{regionCode, regionName, ...}]
+  selectedRegions: {},       // assocCode → Set of region codes (empty = all)
+  watchedCallsigns: [],      // list of callsign strings
+  days: 90,
+  previewData: null,         // null = not yet loaded
+  currentRegionAssoc: null,  // which assoc's regions are being edited
+};
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+(async function init() {
+  updateDaysLabel(90);
+  await loadAssociations();
+})();
+
+// ─── Associations ──────────────────────────────────────────────────────────
+async function loadAssociations() {
+  try {
+    const resp = await fetch('/api/associations');
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    state.allAssocs = data.sort((a, b) => a.associationName.localeCompare(b.associationName));
+    renderContinentFilters();
+    renderAssocList();
+    document.getElementById('api-status').textContent =
+      `${data.length} associations loaded`;
+  } catch (e) {
+    document.getElementById('api-status').textContent = 'Failed to load associations';
+    document.getElementById('assoc-list').innerHTML =
+      `<p class="text-red-500 text-sm p-2">Error: ${e.message}</p>`;
+  }
+}
+
+function renderContinentFilters() {
+  const continents = ['ALL', ...new Set(state.allAssocs.map(a => a.continent).filter(Boolean).sort())];
+  const el = document.getElementById('continent-filters');
+  el.innerHTML = continents.map(c =>
+    `<button class="continent-btn ${c === state.continentFilter ? 'active' : ''}"
+      onclick="setContinentFilter('${c}')">${c}</button>`
+  ).join('');
+}
+
+function setContinentFilter(c) {
+  state.continentFilter = c;
+  renderContinentFilters();
+  renderAssocList();
+}
+
+function renderAssocList() {
+  const search = document.getElementById('assoc-search').value.toLowerCase().trim();
+  const el = document.getElementById('assoc-list');
+
+  let filtered = state.allAssocs;
+  if (state.continentFilter !== 'ALL') {
+    filtered = filtered.filter(a => a.continent === state.continentFilter);
+  }
+  if (search) {
+    filtered = filtered.filter(a =>
+      a.associationCode.toLowerCase().includes(search) ||
+      a.associationName.toLowerCase().includes(search)
+    );
+  }
+
+  if (!filtered.length) {
+    el.innerHTML = '<p class="text-gray-400 text-sm py-3 text-center">No matches</p>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(a => {
+    const code = a.associationCode;
+    const checked = state.selectedAssocs.has(code);
+    const regionCount = state.selectedRegions[code]?.size || 0;
+    const totalRegions = a.regionsCount || 0;
+    const regionLabel = checked && totalRegions > 0
+      ? (regionCount > 0
+          ? `<span class="text-amber-700 text-xs font-semibold">${regionCount}/${totalRegions} regions</span>`
+          : `<span class="text-gray-400 text-xs">all ${totalRegions} regions</span>`)
+      : '';
+    return `
+      <div class="flex items-center gap-2 py-1.5 px-1 rounded hover:bg-gray-50 group">
+        <input type="checkbox" id="assoc-${code}" ${checked ? 'checked' : ''}
+          onchange="toggleAssoc('${code}')"
+          class="w-3.5 h-3.5 accent-amber-600 shrink-0 cursor-pointer" />
+        <label for="assoc-${code}" class="flex-1 min-w-0 cursor-pointer">
+          <span class="font-mono text-xs font-bold text-amber-700">${code}</span>
+          <span class="text-xs text-gray-600 ml-1 truncate">${a.associationName}</span>
+        </label>
+        ${checked && totalRegions > 0 ? `
+          <button onclick="openRegionModal('${code}')" title="Select specific regions"
+            class="text-xs text-gray-400 hover:text-amber-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            ▸ regions
+          </button>
+          <span class="text-xs shrink-0">${regionLabel}</span>
+        ` : ''}
+      </div>`;
+  }).join('');
+
+  // Update selected summary
+  const sel = state.selectedAssocs.size;
+  const sumEl = document.getElementById('assoc-selected-summary');
+  if (sel === 0) {
+    sumEl.textContent = 'No associations selected';
+  } else {
+    const names = [...state.selectedAssocs].join(', ');
+    sumEl.textContent = `Selected: ${names}`;
+  }
+}
+
+async function toggleAssoc(code) {
+  if (state.selectedAssocs.has(code)) {
+    state.selectedAssocs.delete(code);
+    delete state.selectedRegions[code];
+  } else {
+    state.selectedAssocs.add(code);
+    state.selectedRegions[code] = new Set();
+    // Pre-load regions in background
+    loadRegionsForAssoc(code);
+  }
+  renderAssocList();
+}
+
+async function loadRegionsForAssoc(code) {
+  if (state.regionData[code]) return;
+  try {
+    const resp = await fetch(`/api/associations/${code}/regions`);
+    const data = await resp.json();
+    state.regionData[code] = data;
+    renderAssocList(); // re-render to show region count
+  } catch (e) {
+    console.warn('Failed to load regions for', code, e);
+  }
+}
+
+// ─── Region Modal ──────────────────────────────────────────────────────────
+async function openRegionModal(code) {
+  state.currentRegionAssoc = code;
+  const assoc = state.allAssocs.find(a => a.associationCode === code);
+  document.getElementById('region-modal-title').textContent =
+    `Regions — ${code} (${assoc?.associationName || ''})`;
+
+  // Load if not already loaded
+  if (!state.regionData[code]) {
+    document.getElementById('region-modal-list').innerHTML =
+      '<div class="text-center py-4"><span class="spinner"></span></div>';
+    document.getElementById('region-modal').classList.remove('hidden');
+    await loadRegionsForAssoc(code);
+  } else {
+    document.getElementById('region-modal').classList.remove('hidden');
+  }
+
+  renderRegionModal(code);
+}
+
+function renderRegionModal(code) {
+  const regions = state.regionData[code] || [];
+  const selected = state.selectedRegions[code] || new Set();
+  const el = document.getElementById('region-modal-list');
+
+  if (!regions.length) {
+    el.innerHTML = '<p class="text-gray-400 text-sm">No regions available</p>';
+    return;
+  }
+
+  el.innerHTML = regions.map(r => {
+    const key = r.regionCode;
+    const checked = selected.has(key);
+    return `
+      <div class="flex items-center gap-2 py-1.5">
+        <input type="checkbox" id="reg-${code}-${key}" ${checked ? 'checked' : ''}
+          onchange="toggleRegion('${code}', '${key}')"
+          class="w-3.5 h-3.5 accent-amber-600 cursor-pointer shrink-0" />
+        <label for="reg-${code}-${key}" class="cursor-pointer min-w-0">
+          <span class="font-mono text-xs font-bold text-amber-700">${key}</span>
+          <span class="text-sm text-gray-700 ml-1">${r.regionName}</span>
+          <span class="text-xs text-gray-400 ml-1">(${r.summits || 0} summits)</span>
+        </label>
+      </div>`;
+  }).join('');
+}
+
+function toggleRegion(code, regionCode) {
+  if (!state.selectedRegions[code]) state.selectedRegions[code] = new Set();
+  const set = state.selectedRegions[code];
+  if (set.has(regionCode)) set.delete(regionCode);
+  else set.add(regionCode);
+  renderAssocList();
+}
+
+function clearRegions() {
+  if (state.currentRegionAssoc) {
+    state.selectedRegions[state.currentRegionAssoc] = new Set();
+    renderRegionModal(state.currentRegionAssoc);
+    renderAssocList();
+  }
+}
+
+function selectAllRegions() {
+  const code = state.currentRegionAssoc;
+  if (!code) return;
+  const regions = state.regionData[code] || [];
+  state.selectedRegions[code] = new Set(regions.map(r => r.regionCode));
+  renderRegionModal(code);
+  renderAssocList();
+}
+
+function closeRegionModal() {
+  document.getElementById('region-modal').classList.add('hidden');
+  state.currentRegionAssoc = null;
+}
+
+// ─── Watched Callsigns ─────────────────────────────────────────────────────
+function addCallsign() {
+  const input = document.getElementById('callsign-input');
+  const cs = input.value.trim().toUpperCase().replace(/\s+/g, '');
+  if (!cs) return;
+  if (!state.watchedCallsigns.includes(cs)) {
+    state.watchedCallsigns.push(cs);
+    renderCallsignTags();
+  }
+  input.value = '';
+}
+
+function removeCallsign(cs) {
+  state.watchedCallsigns = state.watchedCallsigns.filter(c => c !== cs);
+  renderCallsignTags();
+}
+
+function renderCallsignTags() {
+  const el = document.getElementById('callsign-tags');
+  if (!state.watchedCallsigns.length) {
+    el.innerHTML = '<span class="text-xs text-gray-400 italic">None added</span>';
+    return;
+  }
+  el.innerHTML = state.watchedCallsigns.map(cs =>
+    `<span class="tag tag-watch">
+      ${cs}
+      <button class="tag-btn" onclick="removeCallsign('${cs}')" title="Remove">×</button>
+    </span>`
+  ).join('');
+}
+
+// ─── Time Window ───────────────────────────────────────────────────────────
+function updateDaysLabel(val) {
+  state.days = parseInt(val);
+  const el = document.getElementById('days-label');
+  const hint = document.getElementById('days-date');
+  if (val <= 7) el.textContent = '1 week';
+  else if (val >= 365) el.textContent = '12 months';
+  else if (val % 30 === 0) el.textContent = `${val / 30} month${val / 30 > 1 ? 's' : ''}`;
+  else el.textContent = `${val} days`;
+  const future = new Date();
+  future.setDate(future.getDate() + parseInt(val));
+  hint.textContent = future.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+}
+
+// ─── Build query params ────────────────────────────────────────────────────
+function buildParams() {
+  const params = new URLSearchParams();
+  for (const code of state.selectedAssocs) {
+    params.append('assoc', code);
+  }
+  for (const [assoc, regions] of Object.entries(state.selectedRegions)) {
+    for (const reg of regions) {
+      params.append('region', `${assoc}/${reg}`);
+    }
+  }
+  for (const cs of state.watchedCallsigns) {
+    params.append('callsign', cs);
+  }
+  params.set('days', state.days);
+  params.set('name', document.getElementById('cal-name').value || 'SOTA Activation Alerts');
+  return params;
+}
+
+// ─── Preview ───────────────────────────────────────────────────────────────
+async function previewAlerts() {
+  if (!state.selectedAssocs.size && !state.watchedCallsigns.length) {
+    alert('Select at least one association or add a watched activator first.');
+    return;
+  }
+
+  showPanel('loading');
+
+  try {
+    const params = buildParams();
+    const resp = await fetch(`/api/preview?${params}`);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    state.previewData = data;
+    showPanel('results');
+    renderPreviewTable(data);
+    document.getElementById('export-panel').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('error-message').textContent = e.message;
+    showPanel('error');
+  }
+}
+
+function showPanel(which) {
+  ['welcome', 'loading', 'error', 'results-header', 'preview', 'no-results'].forEach(id => {
+    document.getElementById(`${id}-panel`)?.classList.add('hidden');
+  });
+  if (which === 'loading') {
+    document.getElementById('loading-panel').classList.remove('hidden');
+  } else if (which === 'error') {
+    document.getElementById('error-panel').classList.remove('hidden');
+  } else if (which === 'results') {
+    // handled by renderPreviewTable
+  } else {
+    document.getElementById('welcome-panel').classList.remove('hidden');
+  }
+}
+
+function sortAndRender() {
+  if (state.previewData) renderPreviewTable(state.previewData);
+}
+
+function renderPreviewTable(items) {
+  const sort = document.getElementById('sort-select').value;
+  const sorted = [...items].sort((a, b) => {
+    if (sort === 'date') return new Date(a.date) - new Date(b.date);
+    if (sort === 'summit') return a.summit.localeCompare(b.summit);
+    if (sort === 'callsign') return a.callsign.localeCompare(b.callsign);
+    return 0;
+  });
+
+  const countEl = document.getElementById('results-count');
+  const subEl = document.getElementById('results-subtitle');
+  countEl.textContent = `${items.length} alert${items.length !== 1 ? 's' : ''} found`;
+  const watchCount = items.filter(i => i.isWatch).length;
+  const parts = [];
+  const assocCount = items.length - watchCount;
+  if (assocCount > 0) parts.push(`${assocCount} from selected associations`);
+  if (watchCount > 0) parts.push(`${watchCount} [WATCH]`);
+  subEl.textContent = parts.join(' · ');
+
+  document.getElementById('results-header').classList.remove('hidden');
+
+  if (!items.length) {
+    document.getElementById('no-results-panel').classList.remove('hidden');
+    document.getElementById('preview-panel').classList.add('hidden');
+    return;
+  }
+
+  document.getElementById('preview-panel').classList.remove('hidden');
+  document.getElementById('no-results-panel').classList.add('hidden');
+
+  const tbody = document.getElementById('preview-tbody');
+  tbody.innerHTML = sorted.map(item => {
+    const dt = new Date(item.date);
+    const dateStr = dt.toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+    const watchBadge = item.isWatch
+      ? '<span class="inline-block bg-purple-100 text-purple-700 text-xs font-bold px-1.5 py-0.5 rounded mr-1">[W]</span>'
+      : '';
+    const rowClass = item.isWatch ? 'preview-row-watch' : '';
+    const comments = item.comments ? `<span class="text-gray-400 text-xs block">${item.comments}</span>` : '';
+    return `
+      <tr class="${rowClass} border-b border-gray-100 hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-2.5 font-mono text-xs text-gray-600 whitespace-nowrap">${dateStr}</td>
+        <td class="px-4 py-2.5">
+          ${watchBadge}<a href="${item.sotlas}" target="_blank"
+            class="font-mono text-sm font-bold text-amber-700 hover:underline">${item.summit}</a>
+          <span class="text-xs text-gray-500 block mt-0.5">${item.summitName}</span>
+        </td>
+        <td class="px-4 py-2.5">
+          <span class="font-mono text-sm font-semibold text-gray-800">${item.callsign}</span>
+        </td>
+        <td class="px-4 py-2.5 text-xs text-gray-600 font-mono">${item.frequency || '—'}</td>
+        <td class="px-4 py-2.5 text-xs text-gray-600">${item.summitDetails}${comments}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ─── Export ────────────────────────────────────────────────────────────────
+function downloadICS() {
+  const params = buildParams();
+  params.set('download', '1');
+  window.location = `/calendar.ics?${params}`;
+}
+
+function copySubscribeURL() {
+  const params = buildParams();
+  params.set('download', '0');
+  const url = `${location.origin}/calendar.ics?${params}`;
+  const webcal = url.replace(/^https?:/, 'webcal:');
+
+  const box = document.getElementById('subscribe-url-box');
+  document.getElementById('subscribe-url-text').textContent = webcal;
+  box.classList.toggle('hidden');
+  document.getElementById('import-instructions-box').classList.add('hidden');
+}
+
+function doCopyURL() {
+  const text = document.getElementById('subscribe-url-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('[onclick="doCopyURL()"]');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+function openGoogleImportHelp() {
+  showImportInstructions();
+}
+
+function showImportInstructions() {
+  const box = document.getElementById('import-instructions-box');
+  box.classList.toggle('hidden');
+  document.getElementById('subscribe-url-box').classList.add('hidden');
+}
+
+// ─── Keyboard shortcuts ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeRegionModal();
+});
+
+// Close modal on backdrop click
+document.getElementById('region-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('region-modal')) closeRegionModal();
+});
+
+// Initialize callsign tags
+renderCallsignTags();
+updateDaysLabel(90);
+</script>
+
+</body>
+</html>

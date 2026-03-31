@@ -1,0 +1,16 @@
+# Secrets — never commit these
+service_account.json
+
+# Pi runtime state
+processed_alerts.json
+sota_calendar.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# macOS
+.DS_Store
