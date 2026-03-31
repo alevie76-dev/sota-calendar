@@ -406,7 +406,10 @@ async function loadAssociations() {
     const resp = await fetch('/api/associations');
     const data = await resp.json();
     if (data.error) throw new Error(data.error);
-    state.allAssocs = data.sort((a, b) => a.associationName.localeCompare(b.associationName));
+    state.allAssocs = data.sort((a, b) =>
+      a.associationName.localeCompare(b.associationName, undefined, {sensitivity: 'base'}) ||
+      a.associationCode.localeCompare(b.associationCode, undefined, {sensitivity: 'base'})
+    );
     renderContinentFilters();
     renderAssocList();
     document.getElementById('api-status').textContent =
