@@ -78,9 +78,10 @@
       <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Associations</h2>
 
       <!-- Search + Continent filter -->
-      <input id="assoc-search" type="text" placeholder="Search associations…"
+      <input id="assoc-search" type="text" placeholder="Search or type codes: W7M, W7W, W4C"
         class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-        oninput="renderAssocList()" />
+        oninput="renderAssocList()"
+        onkeydown="if(event.key==='Enter') bulkSelectAssocs()" />
 
       <div class="flex flex-wrap gap-1 mb-2" id="continent-filters">
         <!-- rendered by JS -->
@@ -430,6 +431,28 @@ function setContinentFilter(c) {
   state.continentFilter = c;
   renderContinentFilters();
   renderAssocList();
+}
+
+function bulkSelectAssocs() {
+  const input = document.getElementById('assoc-search');
+  const terms = input.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+  if (terms.length < 2) return; // single term — let normal search/filter handle it
+  const matched = [];
+  terms.forEach(term => {
+    const assoc = state.allAssocs.find(a => a.associationCode === term);
+    if (assoc && !state.selectedAssocs.has(term)) {
+      state.selectedAssocs.add(term);
+      state.selectedRegions[term] = new Set();
+      loadRegionsForAssoc(term);
+      matched.push(term);
+    }
+  });
+  if (matched.length) {
+    input.value = '';
+    state.continentFilter = 'ALL';
+    renderContinentFilters();
+    renderAssocList();
+  }
 }
 
 function renderAssocList() {
