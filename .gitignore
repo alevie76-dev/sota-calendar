@@ -12,5 +12,9 @@ __pycache__/
 *.pyo
 .env
 
+# Node / Tailwind build
+node_modules/
+static/style.css
+
 # macOS
 .DS_Store
