@@ -104,7 +104,7 @@
         <span class="text-purple-700 font-semibold">[WATCH]</span> events.
       </p>
       <div class="flex gap-2 mb-2">
-        <input id="callsign-input" type="text" placeholder="e.g. KK7SDH"
+        <input id="callsign-input" type="text" placeholder="e.g. KH7AL, KK7SDH"
           class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-amber-400"
           onkeydown="if(event.key==='Enter') addCallsign()" />
         <button onclick="addCallsign()"
@@ -597,12 +597,13 @@ function closeRegionModal() {
 // ─── Watched Callsigns ─────────────────────────────────────────────────────
 function addCallsign() {
   const input = document.getElementById('callsign-input');
-  const cs = input.value.trim().toUpperCase().replace(/\s+/g, '');
-  if (!cs) return;
-  if (!state.watchedCallsigns.includes(cs)) {
-    state.watchedCallsigns.push(cs);
-    renderCallsignTags();
-  }
+  const entries = input.value.split(',').map(s => s.trim().toUpperCase().replace(/\s+/g, '')).filter(Boolean);
+  entries.forEach(cs => {
+    if (!state.watchedCallsigns.includes(cs)) {
+      state.watchedCallsigns.push(cs);
+    }
+  });
+  renderCallsignTags();
   input.value = '';
 }
 
