@@ -17,3 +17,7 @@ node_modules/
 
 # macOS
 .DS_Store
+
+.claude/worktrees/exciting-morse
+
+.claude/worktrees/quirky-goldwasser
