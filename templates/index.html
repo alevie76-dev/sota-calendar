@@ -232,110 +232,110 @@
         Export Calendar
       </h2>
 
+      <!-- Subscribe URL (primary action) -->
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-amber-800 mb-1">
+              ⭐ Recommended — Live Subscribe URL (auto-updates every 30 min)
+            </p>
+            <code id="subscribe-url-text" class="block text-xs break-all bg-white border border-amber-200 rounded px-2 py-1.5 text-gray-700">
+              Click "Copy Subscribe URL" to generate
+            </code>
+          </div>
+          <button onclick="copySubscribeURL()"
+            class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-sm px-4 py-2 rounded font-semibold transition-colors">
+            Copy URL
+          </button>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 
+        <!-- How to Subscribe -->
+        <div class="export-card md:col-span-2">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xl">📲</span>
+            <h3 class="font-semibold text-gray-800 text-sm">How to Subscribe (live, auto-updating)</h3>
+          </div>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-700">
+            <div>
+              <p class="font-semibold text-gray-600 mb-1">Google Calendar (desktop browser only)</p>
+              <ol class="list-decimal ml-4 space-y-0.5">
+                <li>Copy the Subscribe URL above</li>
+                <li>Open <strong>calendar.google.com</strong></li>
+                <li>Left sidebar → Other calendars → <strong>+</strong></li>
+                <li>Select <strong>From URL</strong></li>
+                <li>Paste the URL → <strong>Add Calendar</strong></li>
+              </ol>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-600 mb-1">Apple Calendar (Mac)</p>
+              <ol class="list-decimal ml-4 space-y-0.5">
+                <li>Copy the Subscribe URL above</li>
+                <li>Open Calendar app</li>
+                <li>File → <strong>New Calendar Subscription</strong></li>
+                <li>Paste the URL → Subscribe</li>
+                <li>Set refresh to <strong>Every 30 minutes</strong></li>
+              </ol>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-600 mb-1">iPhone / iPad</p>
+              <ol class="list-decimal ml-4 space-y-0.5">
+                <li>Copy the Subscribe URL above</li>
+                <li>Settings → Calendar → Accounts</li>
+                <li>Add Account → <strong>Other</strong></li>
+                <li>Add Subscribed Calendar</li>
+                <li>Paste the URL → Next → Save</li>
+              </ol>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-600 mb-1">Outlook Desktop</p>
+              <ol class="list-decimal ml-4 space-y-0.5">
+                <li>Copy the Subscribe URL above</li>
+                <li>Open Outlook Calendar</li>
+                <li>Add Calendar → <strong>From Internet</strong></li>
+                <li>Paste the URL → OK</li>
+              </ol>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-600 mb-1">Outlook.com</p>
+              <ol class="list-decimal ml-4 space-y-0.5">
+                <li>Copy the Subscribe URL above</li>
+                <li>Open <strong>outlook.com</strong> Calendar</li>
+                <li>Add calendar → <strong>Subscribe from web</strong></li>
+                <li>Paste the URL → Import</li>
+              </ol>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-600 mb-1">Thunderbird</p>
+              <ol class="list-decimal ml-4 space-y-0.5">
+                <li>Copy the Subscribe URL above</li>
+                <li>Calendar → New Calendar</li>
+                <li>Select <strong>On the Network</strong></li>
+                <li>Format: iCalendar, paste the URL</li>
+                <li>Set a name and click Next</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
         <!-- Download ICS -->
-        <div class="export-card">
+        <div class="export-card flex flex-col">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-2xl">📥</span>
+            <span class="text-xl">📥</span>
             <h3 class="font-semibold text-gray-800 text-sm">Download ICS</h3>
           </div>
-          <p class="text-xs text-gray-500 mb-3">One-time snapshot. Import into any calendar app.</p>
+          <p class="text-xs text-gray-500 mb-3 flex-1">
+            One-time snapshot only — <strong>does not update</strong> when new alerts are posted.
+            Use only if your calendar app doesn't support URL subscriptions.
+          </p>
           <button onclick="downloadICS()"
-            class="w-full bg-amber-600 hover:bg-amber-700 text-white text-sm py-2 rounded font-semibold transition-colors">
+            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm py-2 rounded font-semibold transition-colors">
             Download .ics
           </button>
         </div>
 
-        <!-- Google Calendar -->
-        <div class="export-card">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-2xl">📅</span>
-            <h3 class="font-semibold text-gray-800 text-sm">Google Calendar</h3>
-          </div>
-          <p class="text-xs text-gray-500 mb-2">Import the downloaded .ics file, or subscribe if this server is publicly accessible.</p>
-          <button onclick="openGoogleImportHelp()"
-            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm py-2 rounded font-semibold transition-colors mb-1.5">
-            How to Import
-          </button>
-          <button onclick="copySubscribeURL()"
-            class="w-full border border-amber-300 hover:bg-amber-50 text-amber-800 text-sm py-2 rounded font-semibold transition-colors">
-            Copy Subscribe URL
-          </button>
-        </div>
-
-        <!-- Outlook / Other -->
-        <div class="export-card">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-2xl">📨</span>
-            <h3 class="font-semibold text-gray-800 text-sm">Outlook / Other</h3>
-          </div>
-          <p class="text-xs text-gray-500 mb-2">Works with Outlook, Apple Calendar, Thunderbird, and any ICS-compatible app.</p>
-          <button onclick="showImportInstructions()"
-            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm py-2 rounded font-semibold transition-colors">
-            Import Instructions
-          </button>
-        </div>
-
-      </div>
-
-      <!-- Subscribe URL display -->
-      <div id="subscribe-url-box" class="hidden mt-3 bg-gray-50 border border-gray-200 rounded p-3">
-        <p class="text-xs font-semibold text-gray-600 mb-1">Subscribe URL (live auto-updating):</p>
-        <div class="flex items-center gap-2">
-          <code id="subscribe-url-text" class="flex-1 text-xs break-all bg-white border border-gray-200 rounded px-2 py-1.5 block"></code>
-          <button onclick="doCopyURL()" class="copy-btn shrink-0">Copy</button>
-        </div>
-        <p class="text-xs text-gray-400 mt-1.5">
-          Requires this server to be publicly accessible. In Google Calendar: Other calendars → + → From URL.
-          In Outlook.com: Add calendar → Subscribe from web.
-        </p>
-      </div>
-
-      <!-- Import instructions modal-like box -->
-      <div id="import-instructions-box" class="hidden mt-3 bg-gray-50 border border-gray-200 rounded p-4 text-sm">
-        <h4 class="font-semibold text-gray-800 mb-2">Import .ics into your calendar app</h4>
-        <div class="grid grid-cols-2 gap-4 text-xs text-gray-700">
-          <div>
-            <p class="font-semibold text-gray-600 mb-1">Google Calendar</p>
-            <ol class="list-decimal ml-4 space-y-0.5">
-              <li>Download the .ics file</li>
-              <li>Open Google Calendar</li>
-              <li>Settings → Import &amp; Export</li>
-              <li>Import → select the .ics file</li>
-              <li>Choose which calendar to add events to</li>
-            </ol>
-          </div>
-          <div>
-            <p class="font-semibold text-gray-600 mb-1">Outlook (Desktop)</p>
-            <ol class="list-decimal ml-4 space-y-0.5">
-              <li>Download the .ics file</li>
-              <li>Double-click the file, or</li>
-              <li>File → Open &amp; Export → Import/Export</li>
-              <li>Import an iCalendar (.ics) file</li>
-              <li>Choose Open as new or Import</li>
-            </ol>
-          </div>
-          <div>
-            <p class="font-semibold text-gray-600 mb-1">Apple Calendar</p>
-            <ol class="list-decimal ml-4 space-y-0.5">
-              <li>Download the .ics file</li>
-              <li>Double-click the .ics file</li>
-              <li>Choose which calendar to add to</li>
-              <li>Click Import</li>
-            </ol>
-          </div>
-          <div>
-            <p class="font-semibold text-gray-600 mb-1">Outlook.com</p>
-            <ol class="list-decimal ml-4 space-y-0.5">
-              <li>Download the .ics file</li>
-              <li>Open Outlook.com Calendar</li>
-              <li>Add calendar → Upload from file</li>
-              <li>Select the .ics file</li>
-              <li>Click Import</li>
-            </ol>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -794,10 +794,13 @@ function copySubscribeURL() {
   const url = `${location.origin}/calendar.ics?${params}`;
   const webcal = url.replace(/^https?:/, 'webcal:');
 
-  const box = document.getElementById('subscribe-url-box');
   document.getElementById('subscribe-url-text').textContent = webcal;
-  box.classList.toggle('hidden');
-  document.getElementById('import-instructions-box').classList.add('hidden');
+  navigator.clipboard.writeText(webcal).then(() => {
+    const btn = document.querySelector('[onclick="copySubscribeURL()"]');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
 }
 
 function doCopyURL() {
@@ -809,15 +812,6 @@ function doCopyURL() {
   });
 }
 
-function openGoogleImportHelp() {
-  showImportInstructions();
-}
-
-function showImportInstructions() {
-  const box = document.getElementById('import-instructions-box');
-  box.classList.toggle('hidden');
-  document.getElementById('subscribe-url-box').classList.add('hidden');
-}
 
 // ─── Keyboard shortcuts ────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
