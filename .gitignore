@@ -14,7 +14,6 @@ __pycache__/
 
 # Node / Tailwind build
 node_modules/
-static/style.css
 
 # macOS
 .DS_Store

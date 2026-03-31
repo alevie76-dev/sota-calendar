@@ -3,6 +3,6 @@ services:
     name: sota-calendar
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt && npm install && npm run build:css
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app
     healthCheckPath: /
