@@ -168,7 +168,7 @@ def build_ics(filtered: list, cal_name: str) -> bytes:
         ev.add("dtstart", dt)
         ev.add("dtend", dt + timedelta(hours=1))
         ev.add("url", sotlas)
-        ev.add("uid", f"{alert.get('epoch', alert['id'])}@sota-calendar-builder")
+        ev.add("uid", f"{alert['id']}@sota-calendar-builder")
         ev.add("dtstamp", datetime.now(timezone.utc))
         cal.add_component(ev)
 
