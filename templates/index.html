@@ -61,10 +61,10 @@
   </div>
 </header>
 
-<div class="max-w-screen-xl mx-auto px-4 py-5 flex gap-5">
+<div class="max-w-screen-xl mx-auto px-4 py-5 flex flex-col md:flex-row gap-5">
 
   <!-- ─── Left Panel: Filters ─────────────────────────────────────────────── -->
-  <aside class="w-80 shrink-0 flex flex-col gap-4">
+  <aside class="w-full md:w-80 md:shrink-0 flex flex-col gap-4">
 
     <!-- Calendar Name -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -158,7 +158,7 @@
         add activators to your watchlist, set your time window, then click
         <strong>Preview Alerts</strong> to see what you'll get.
       </p>
-      <div class="mt-5 grid grid-cols-3 gap-3 max-w-sm mx-auto text-xs text-gray-500">
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-sm mx-auto text-xs text-gray-500">
         <div class="bg-gray-50 rounded p-2">
           <div class="text-lg mb-1">🏔</div>Select associations & regions
         </div>
@@ -184,7 +184,7 @@
     </div>
 
     <!-- Results header -->
-    <div id="results-header" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3 flex items-center justify-between">
+    <div id="results-header" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
       <div>
         <span id="results-count" class="font-semibold text-gray-900"></span>
         <span class="text-gray-500 text-sm ml-1" id="results-subtitle"></span>
@@ -209,7 +209,7 @@
               <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Summit</th>
               <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Activator</th>
               <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Frequency</th>
-              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Notes</th>
+              <th class="hidden md:table-cell text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Notes</th>
             </tr>
           </thead>
           <tbody id="preview-tbody"></tbody>
@@ -258,7 +258,7 @@
             <span class="text-xl">📲</span>
             <h3 class="font-semibold text-gray-800 text-sm">How to Subscribe (live, auto-updating)</h3>
           </div>
-          <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-700">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-700">
             <div>
               <p class="font-semibold text-gray-600 mb-1">Google Calendar (desktop browser only)</p>
               <ol class="list-decimal ml-4 space-y-0.5">
@@ -358,7 +358,7 @@
 
 <!-- ─── Region Modal ─────────────────────────────────────────────────────── -->
 <div id="region-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-  <div class="bg-white rounded-xl shadow-2xl w-96 max-h-[80vh] flex flex-col">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 max-h-[80vh] flex flex-col">
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
       <h3 id="region-modal-title" class="font-semibold text-gray-800">Select Regions</h3>
       <button onclick="closeRegionModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
@@ -499,7 +499,7 @@ function renderAssocList() {
         </label>
         ${checked && totalRegions > 0 ? `
           <button onclick="openRegionModal('${code}')" title="Select specific regions"
-            class="text-xs text-gray-400 hover:text-amber-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            class="text-xs text-gray-400 hover:text-amber-700 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
             ▸ regions
           </button>
           <span class="text-xs shrink-0">${regionLabel}</span>
@@ -779,7 +779,7 @@ function renderPreviewTable(items) {
           <span class="font-mono text-sm font-semibold text-gray-800">${item.callsign}</span>
         </td>
         <td class="px-4 py-2.5 text-xs text-gray-600 font-mono">${item.frequency || '—'}</td>
-        <td class="px-4 py-2.5 text-xs text-gray-600">${item.summitDetails}${comments}</td>
+        <td class="hidden md:table-cell px-4 py-2.5 text-xs text-gray-600">${item.summitDetails}${comments}</td>
       </tr>`;
   }).join('');
 }
