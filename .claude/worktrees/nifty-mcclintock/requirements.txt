@@ -1,0 +1,8 @@
+requests>=2.31.0
+flask>=3.0.0
+icalendar>=5.0.0
+gunicorn>=21.0.0
+
+# Pi only — Google Calendar service account sync (sota_calendar.py)
+google-auth>=2.27.0
+google-api-python-client>=2.114.0

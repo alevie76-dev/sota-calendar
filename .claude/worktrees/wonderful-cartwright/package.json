@@ -1,0 +1,12 @@
+{
+  "name": "sota-calendar",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/input.css -o ./static/style.css --minify",
+    "watch:css": "tailwindcss -i ./static/input.css -o ./static/style.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

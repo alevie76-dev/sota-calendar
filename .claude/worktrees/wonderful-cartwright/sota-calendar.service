@@ -1,0 +1,12 @@
+[Unit]
+Description=SOTA Calendar Integration (one-shot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=kh7al
+WorkingDirectory=/home/kh7al/sota-calendar
+ExecStart=/home/kh7al/sota-calendar/venv/bin/python sota_calendar.py
+StandardOutput=journal
+StandardError=journal

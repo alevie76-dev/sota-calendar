@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aprs-map (Flask dev)",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Users/allen/Documents/aprs-map/app.py"],
+      "port": 5000,
+      "autoPort": true
+    }
+  ]
+}

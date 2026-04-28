@@ -1,0 +1,7 @@
+{
+  "_comment": "Add or remove callsigns to watch. These activators will generate [WATCH] events even when activating outside W7M. Portable suffixes (/P, /0, etc.) are handled automatically.",
+  "callsigns": [
+    "KK7SDH",
+    "K4MEW"
+  ]
+}

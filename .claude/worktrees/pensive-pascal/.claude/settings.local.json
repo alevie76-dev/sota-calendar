@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/allen/Documents/kh7al-relay/**)",
+      "Read(//Users/allen/Documents/kh7al-remote/**)",
+      "Bash(find /Users/allen/Documents/kh7al-relay /Users/allen/Documents/kh7al-remote -name *.env* -o -name .env*)"
+    ]
+  }
+}

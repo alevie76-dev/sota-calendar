@@ -1,0 +1,23 @@
+# Secrets — never commit these
+service_account.json
+
+# Pi runtime state
+processed_alerts.json
+sota_calendar.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Node / Tailwind build
+node_modules/
+
+# macOS
+.DS_Store
+
+.claude/worktrees/exciting-morse
+
+.claude/worktrees/quirky-goldwasser
