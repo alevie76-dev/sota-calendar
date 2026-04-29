@@ -80,7 +80,11 @@ def fetch_alerts() -> list:
     try:
         resp = requests.get(SOTA_API_URL, timeout=30)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        if not isinstance(data, list):
+            log.error("Unexpected response format from SOTA API")
+            return []
+        return data
     except Exception as e:
         log.error(f"Failed to fetch SOTA alerts: {e}")
         return []
@@ -97,8 +101,7 @@ def normalize_callsign(callsign: str) -> str:
 
 
 def parse_utc(date_str: str) -> datetime:
-    s = date_str.rstrip("Z") + "+00:00" if date_str.endswith("Z") else date_str
-    dt = datetime.fromisoformat(s)
+    dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
